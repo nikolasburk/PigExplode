@@ -2,7 +2,7 @@
 
 In this post, I want to show how the `UIKitDynamics` API can be used to create a fun *explosion* of images whenever a user taps on the screen. In particular, I am going to use `UIPushBehavior` and `UIGravityBehavior` to achieve this.
 
-[caption id="attachment_356" align="aligncenter" width="260"]<img src="http://nikolasburk.com/wp-content/uploads/2015/12/demo_short.gif" alt="Creating an explosion of images on user taps" width="260" height="484" class="size-full wp-image-356" /> Creating an explosion of images on user taps[/caption]
+![][http://nikolasburk.com/wp-content/uploads/2015/12/demo_short.gif]
 
 If you want to follow along, start by setting up setup an empty Xcode Project (*Single View Application* for *iPhone* will do). Note that this repository contains an evolving version of the code [Github page][1] and this article is crossposted from my [actual blog](http://nikolasburk.com/?page_id=70).
 
