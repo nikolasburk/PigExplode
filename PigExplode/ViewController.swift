@@ -18,6 +18,11 @@ class ViewController: UIViewController {
     // with every explosion
     var gravity: UIGravityBehavior!
     
+    // attachment behavior comes into play as soon as the
+    // user starts dragging on the screen
+//    var attachment: UIAttachmentBehavior!
+    var anchor: CGPoint!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -39,17 +44,25 @@ class ViewController: UIViewController {
                     self.animator.removeBehavior(push)
                 }
 
+                // remove the attachment behaviour from the animator
+                if let attachment = item.attachmentBehavior {
+                    self.animator.removeBehavior(attachment)
+                }
+                
                 // remove the item from the gravity behavior
                 self.gravity.removeItem(item as UIDynamicItem)
                 
                 // remove it from superview so its memory can be freed
                 item.removeFromSuperview()
+                
+                print("left views: \(self.view.subviews.count); behaviours: \(self.animator.behaviors.count)")
             }
         }
+        
     }
 
     
-    // check for touches on the screen
+    // catch ending touches on the screen
     override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?) {
         
         // retrieve location of touch
@@ -79,12 +92,50 @@ class ViewController: UIViewController {
 
         // associate all items with gravity
         self.gravity.addItems(pigs)
-        print("touches ended")
+        
+        // clean up attachment behavior
+        let activePigViews = self.view.subviews.filter { $0.tag == PIG_TAG && $0.attachmentBehavior != nil }
+        let _ = activePigViews.map {
+            if let attachment = $0.attachmentBehavior {
+                self.animator.removeBehavior(attachment)
+            }
+            $0.attachmentBehavior = nil
+        }
+        
     }
+    
+    override func touchesMoved(touches: Set<UITouch>, withEvent event: UIEvent?) {
+        
+        // retrieve location of touch and update anchor
+        let touch = touches.first!
+        let location = touch.locationInView(self.view)
+        self.anchor = location
+        print("touches moved: \(self.anchor)")
+        
+        // update the achor for existing items
+        let activePigViews = self.view.subviews.filter { $0.tag == PIG_TAG && $0.attachmentBehavior != nil }
+        let _ = activePigViews.map { $0.attachmentBehavior!.anchorPoint = self.anchor }
+        
+        // configure and add attachment behavior for new items
+        let newPigViews = self.view.subviews.filter { $0.tag == PIG_TAG && $0.attachmentBehavior == nil }
+        for newPigView in newPigViews {
+            let attachment = UIAttachmentBehavior(item: newPigView, attachedToAnchor: self.anchor)
+            newPigView.attachmentBehavior = attachment
+            
+            // gradually decrease the distance of the item and the anchor point with every move
+            attachment.action = {
+                attachment.length = attachment.length > 0 ? attachment.length / 1.01  : attachment.length
+            }
+            
+            self.animator.addBehavior(attachment)
+        }
+    }
+    
 }
 
-// MARK: Create image views
 
+// MARK: Create image views
+let PIG_TAG = 42
 func createExplosionImages(number: Int, imageName: String, center: CGPoint) -> [UIImageView] {
     var pigs: [UIImageView] = []
     for var i = 0; i < number; i++ {
@@ -92,6 +143,7 @@ func createExplosionImages(number: Int, imageName: String, center: CGPoint) -> [
         let pigView = UIImageView(image: UIImage(named: imageName))
         pigView.scale(scaleWithX: 0.1, andY: 0.1)
         pigView.center = center
+        pigView.tag = PIG_TAG
         pigs.append(pigView)
     }
     return pigs
@@ -161,6 +213,7 @@ extension UIGravityBehavior {
 }
 
 private var pushAssociationKey: UInt8 = 0
+private var attachmentAssociationKey: UInt8 = 0
 extension UIDynamicItem {
     var pushBehavior: UIPushBehavior? {
         get {
@@ -168,6 +221,14 @@ extension UIDynamicItem {
         }
         set(newValue) {
             objc_setAssociatedObject(self, &pushAssociationKey, newValue, .OBJC_ASSOCIATION_RETAIN)
+        }
+    }
+    var attachmentBehavior: UIAttachmentBehavior? {
+        get {
+            return objc_getAssociatedObject(self, &attachmentAssociationKey) as? UIAttachmentBehavior
+        }
+        set(newValue) {
+            objc_setAssociatedObject(self, &attachmentAssociationKey, newValue, .OBJC_ASSOCIATION_RETAIN)
         }
     }
 }
