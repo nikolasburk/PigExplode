@@ -8,7 +8,7 @@ To follow along, first setup an empty Xcode Project (_Single View Application_ f
 #### Getting started with `UIDynamicAnimator`
 
 At first add a property to the empty `ViewController` like so:
-
+    
     var animator: UIDynamicAnimator!
 
 The `animator` is the main instance that is going to control all the effects and behaviors that we are introducing in our view. It is the _intermediator_ between the underlying iOS physics engine and our dynamic items. Every effect that we want ot use has to somehow be _registered_ with our animator.
@@ -26,19 +26,21 @@ As a next step, we want to add a number of images to our view that will later sp
 
 First we're writing a free function that creates a number of `UIImageViews` and returns them.
 
-    let pigTag = 42
-    func createExplosionImages(number: Int, imageName: String, center: CGPoint) -> [UIImageView] {
-        var pigs: [UIImageView] = []
-        for var i = 0; i < number; i++ {
-            // create and add an image view
-            let pigView = UIImageView(image: UIImage(named: imageName))
-            pigView.scale(scaleWithX: 0.1, andY: 0.1)
-            pigView.center = center
-            pigView.tag = pigTag
-            pigs.append(pigView)
-        }
-        return pigs
+```swift
+let pigTag = 42
+func createExplosionImages(number: Int, imageName: String, center: CGPoint) -> [UIImageView] {
+    var pigs: [UIImageView] = []
+    for var i = 0; i < number; i++ {
+        // create and add an image view
+        let pigView = UIImageView(image: UIImage(named: imageName))
+        pigView.scale(scaleWithX: 0.1, andY: 0.1)
+        pigView.center = center
+        pigView.tag = pigTag
+        pigs.append(pigView)
     }
+    return pigs
+}
+```
 
 Then we override `touchedEnded()`, a function defined in `UIResponder` which is the superclass of by `UIViewController`. It gets called within our `ViewController` whenever the user's finger _leaves_ the screen. Whenever that happens, we want to add our images to the view:
 
