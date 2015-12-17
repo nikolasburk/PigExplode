@@ -18,26 +18,40 @@ class ViewController: UIViewController {
     // with every explosion
     var gravity: UIGravityBehavior!
     
+    // collision for the left and right bounds of the frame
+    var collision: UICollisionBehavior!
+    
     // attachment behavior comes into play as soon as the
-    // user starts dragging on the screen
-//    var attachment: UIAttachmentBehavior!
+    // user starts dragging on the screen, this is the common anchor
     var anchor: CGPoint!
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         // instantiate animator and configure with gravity behaviour
         // (items are added later on dynamically)
         animator = UIDynamicAnimator(referenceView: view)
+        
         gravity = UIGravityBehavior(items: [])
         animator.addBehavior(gravity)
+        
+        collision = UICollisionBehavior(items: [])
+        let topLeft = self.view.bounds.origin
+        let bottomLeft = CGPoint(x: self.view.bounds.origin.x, y: self.view.bounds.size.height)
+        collision.addBoundaryWithIdentifier("left", fromPoint: topLeft, toPoint: bottomLeft)
+        let topRight = CGPoint(x: self.view.bounds.size.width, y: 0.0)
+        let bottomRight = CGPoint(x: self.view.bounds.size.width, y: self.view.bounds.size.height)
+        collision.addBoundaryWithIdentifier("right", fromPoint: topRight, toPoint: bottomRight)
+        animator.addBehavior(collision)
         
         // make sure that items are removed from the view once
         // they fall beneath the bottom
         gravity.action = { [unowned self] in
+            
             let itemsToRemove = self.gravity.items
                 .map {$0 as! UIImageView }
                 .filter() { $0.frame.origin.y > self.view.frame.size.height } // remove when falling beneath the bottom
+            
             for item in itemsToRemove {
                 // remove the push behaviour from the animator
                 if let push = item.pushBehavior {
@@ -51,17 +65,17 @@ class ViewController: UIViewController {
                 
                 // remove the item from the gravity behavior
                 self.gravity.removeItem(item as UIDynamicItem)
+                self.collision.removeItem(item as UIDynamicItem)
                 
                 // remove it from superview so its memory can be freed
                 item.removeFromSuperview()
                 
-                print("left views: \(self.view.subviews.count); behaviours: \(self.animator.behaviors.count)")
+//                print("left views: \(self.view.subviews.count); behaviours: \(self.animator.behaviors.count)")
             }
         }
         
     }
 
-    
     // catch ending touches on the screen
     override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?) {
         
@@ -69,8 +83,8 @@ class ViewController: UIViewController {
         let touch = touches.first!
         let location = touch.locationInView(self.view)
 
-        // how many objects are being created
-        let numberOfPigs = 6
+        // how many items should be created
+        let numberOfPigs = 3
         let pigs = createExplosionImages(numberOfPigs, imageName: "pig", center: location)
         
         // using an old-style for-loop as we need the index 
@@ -92,6 +106,7 @@ class ViewController: UIViewController {
 
         // associate all items with gravity
         self.gravity.addItems(pigs)
+        self.collision.addItems(pigs)
         
         // clean up attachment behavior
         let activePigViews = self.view.subviews.filter { $0.tag == PIG_TAG && $0.attachmentBehavior != nil }
@@ -103,14 +118,14 @@ class ViewController: UIViewController {
         }
         
     }
-    
+
+    // catch dragging by the user
     override func touchesMoved(touches: Set<UITouch>, withEvent event: UIEvent?) {
         
         // retrieve location of touch and update anchor
         let touch = touches.first!
         let location = touch.locationInView(self.view)
         self.anchor = location
-        print("touches moved: \(self.anchor)")
         
         // update the achor for existing items
         let activePigViews = self.view.subviews.filter { $0.tag == PIG_TAG && $0.attachmentBehavior != nil }
@@ -135,6 +150,7 @@ class ViewController: UIViewController {
 
 
 // MARK: Create image views
+
 let PIG_TAG = 42
 func createExplosionImages(number: Int, imageName: String, center: CGPoint) -> [UIImageView] {
     var pigs: [UIImageView] = []
@@ -203,13 +219,19 @@ func RadiansToDegrees(value: Double) -> Double {
 // MARK: Extensions & other helpers
 
 extension UIGravityBehavior {
-    
     func addItems(items: [UIDynamicItem]) {
         for item in items {
             addItem(item)
         }
     }
-    
+}
+
+extension UICollisionBehavior {
+    func addItems(items: [UIDynamicItem]) {
+        for item in items {
+            addItem(item)
+        }
+    }
 }
 
 private var pushAssociationKey: UInt8 = 0
