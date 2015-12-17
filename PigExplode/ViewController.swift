@@ -46,7 +46,7 @@ class ViewController: UIViewController {
         
         // make sure that items are removed from the view once
         // they fall beneath the bottom
-        gravity.action = { [unowned self] in
+        gravity.action = { // [unowned self] in
             
             let itemsToRemove = self.gravity.items
                 .map {$0 as! UIImageView }
@@ -97,7 +97,6 @@ class ViewController: UIViewController {
             // create and configure the push behaviour
             let push = UIPushBehavior(items: [pigs[i]], mode: .Instantaneous)
             push.pushDirection = vectorForIndex(i, max: numberOfPigs)
-            push.active = true
             
             // add the push behaviour to the item and to the animator
             pigs[i].pushBehavior = push
