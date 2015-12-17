@@ -83,9 +83,11 @@ As we want to only have a short, _spring_-like push, we are using the _instantan
 ```swift
 let push = UIPushBehavior(items: [pigs[i]], mode: .Instantaneous)
 push.pushDirection = vectorForIndex(i, max: numberOfPigs)
+```
 
 And implement `vectorForIndex()` like so:
 
+```swift
 func vectorForIndex(index: Int, max: Int) -> CGVector {
 
     // the furthest points on the x-scale
